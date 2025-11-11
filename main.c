@@ -12,6 +12,13 @@ static void print_usage(const char *program_name) {
     fprintf(stderr, "  %s 1000000 primes.txt\n", program_name);
 }
 
+// Get high-resolution time in seconds
+static double get_time(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (double)ts.tv_sec + (double)ts.tv_nsec / 1e9;
+}
+
 int main(int argc, char *argv[]) {
     if (argc < 2 || argc > 3) {
         print_usage(argv[0]);
@@ -31,16 +38,22 @@ int main(int argc, char *argv[]) {
     size_t limit = (size_t)limit_long;
     const char *output_file = (argc == 3) ? argv[2] : NULL;
     
-    // Run sieve with timing
-    clock_t start = clock();
+    // Run sieve with high-resolution timing
+    double start = get_time();
     size_t prime_count = sieve_of_eratosthenes(limit, output_file);
-    clock_t end = clock();
+    double end = get_time();
     
-    double elapsed_time = (double)(end - start) / CLOCKS_PER_SEC;
+    double elapsed_time = end - start;
     
-    // Print results
+    // Print results with microsecond precision
     printf("Primes found: %zu\n", prime_count);
-    printf("Time elapsed: %.6f seconds\n", elapsed_time);
+    if (elapsed_time < 0.001) {
+        printf("Time elapsed: %.2f microseconds\n", elapsed_time * 1e6);
+    } else if (elapsed_time < 1.0) {
+        printf("Time elapsed: %.3f milliseconds\n", elapsed_time * 1e3);
+    } else {
+        printf("Time elapsed: %.6f seconds\n", elapsed_time);
+    }
     
     if (output_file != NULL) {
         printf("Primes written to: %s\n", output_file);
