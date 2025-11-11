@@ -1,0 +1,11 @@
+# Build artifacts
+*.o
+sieve
+
+# Output files
+*.txt
+primes_*
+
+# macOS
+.DS_Store
+
