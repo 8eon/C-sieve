@@ -103,6 +103,3 @@ See `PLANNING.md` for detailed optimization roadmap:
 - POSIX system (macOS, Linux)
 - Stack size: default 8MB sufficient for n ≤ 128M
 
-## License
-
-Open source - feel free to use and modify!
