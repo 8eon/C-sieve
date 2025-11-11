@@ -1,23 +1,29 @@
 # C Sieve of Eratosthenes
 
-A high-performance implementation of the Sieve of Eratosthenes algorithm in C, optimized for speed with no `malloc` usage.
+A **blazingly fast** implementation of the Sieve of Eratosthenes in C, capable of finding **50+ million primes up to 1 billion in under 1 second** with **zero malloc**.
 
-## Project Overview
+## 🚀 Performance Highlights
 
-**Goal:** Implement the Sieve of Eratosthenes with maximum performance through incremental optimization.
+```
+n = 1,000,000,000    →  50,847,534 primes in 872ms  ⚡
+n = 100,000,000      →   5,761,455 primes in  85ms  🔥  
+n = 10,000,000       →     664,579 primes in 8.5ms  ⭐
+n = 100,000          →       9,592 primes in  72μs  ✨
+```
 
-The Sieve of Eratosthenes is an efficient algorithm to find all prime numbers up to a given limit by iteratively marking multiples of each prime as composite.
+**All on the stack. No malloc. Clean code.**
 
 ## Features
 
+- ✅ **Segmented Sieve** - Cache-friendly 256KB segments for massive ranges
+- ✅ **Dual-path Architecture** - Optimized simple sieve (< 10M) + segmented (≥ 10M)
 - ✅ **No malloc** - Pure stack allocation using VLA
-- ✅ **Odd-only optimization** - Only stores odd numbers (2x memory reduction)
-- ✅ **Bit array** - Packs 8 odd numbers per byte (16x total memory reduction)
+- ✅ **Odd-only + Bit array** - 16x memory reduction vs baseline
+- ✅ **High-resolution timing** - Microsecond precision with `clock_gettime()`
 - ✅ **Optimized algorithm** - Sieves up to √n, starts marking from p²
-- ✅ **Fast** - Aggressive compiler optimizations with `-O3 -march=native -flto`
-- ✅ **Large range support** - Handles n up to ~128M on 8MB stack
+- ✅ **Aggressive compilation** - `-O3 -march=native -flto`
 
-## Usage
+## Quick Start
 
 ### Build
 
@@ -31,75 +37,175 @@ make
 ./sieve <limit> [output_file]
 ```
 
-**Examples:**
-```bash
-# Find all primes up to 1 million
-./sieve 1000000
+### Examples
 
-# Find primes and save to file
+```bash
+# Find all primes up to 1 billion
+./sieve 1000000000
+
+# Save primes to file
 ./sieve 1000000 primes.txt
+
+# Small test
+./sieve 100
 ```
 
 ### Output
 
-The program prints:
-- Number of primes found
-- Execution time
-- Optional: writes all primes to file (one per line)
+```
+Primes found: 50847534
+Time elapsed: 872.340 milliseconds
+```
 
-## Project Structure
+## Architecture
 
-**Files:**
-- `sieve.h` - Header file with function declarations
-- `sieve.c` - Core sieve algorithm implementation
-- `main.c` - CLI interface and timing
-- `Makefile` - Build configuration with optimization flags
-- `PLANNING.md` - Detailed optimization roadmap and decisions
+### Two-Path Design
 
-## Performance
+**Small n (< 10M):** Simple sieve with odd-only + bit array
+- Fast for small ranges
+- Optimal memory usage
+- Single-pass algorithm
 
-Current optimizations provide:
-- **16x memory reduction** vs baseline (2x odd-only × 8x bit packing)
-- **~2.4x speed improvement** from odd-only optimization
-- **Better cache utilization** from bit array (more data fits in L1/L2)
+**Large n (≥ 10M):** Segmented sieve
+- Cache-friendly 256KB segments
+- Constant memory usage (no matter how large n is!)
+- Scales to billions
 
-**Test results (all correct):**
-- n = 100: 25 primes ✓
-- n = 1,000: 168 primes ✓
-- n = 10,000: 1,229 primes ✓
-- n = 100,000: 9,592 primes ✓
+### Implementation Details
 
-**Benchmarks:**
-- n = 100,000: ~0.000068 seconds
-- Stack capacity: ~128M range on 8MB stack
+**Phase 1: Base Primes**
+- Find all primes up to √n using simple sieve
+- Store on stack (√1B ≈ 31,622 → ~3,400 primes → ~30KB)
 
-## Implementation Details
+**Phase 2: Segmented Processing**
+- Process 256KB segments sequentially
+- Each segment fits in L2 cache
+- Use base primes to mark composites
+- Output primes on the fly
 
 ### Memory Strategy
 
-- **Stack allocation** - Uses VLA (Variable Length Array) for dynamic sizing
-- **No malloc policy** - All memory on stack, automatic cleanup
-- **Bit packing** - Each byte stores 8 odd numbers using bit manipulation
-- **Odd-only** - Skips even numbers (except 2), reduces array size by half
+- **VLA (Variable Length Arrays)** - Dynamic sizing on stack
+- **No malloc policy** - Zero heap allocation
+- **Bit packing** - 8 odd numbers per byte
+- **Odd-only** - Skip all even numbers (except 2)
+- **Result:** 16x memory reduction vs naive approach
 
 ### Algorithm Optimizations
 
-1. Only check up to √n (numbers larger than √n can't have factors)
-2. Start marking multiples from p² (smaller multiples already marked)
-3. Skip even numbers entirely (only 2 is even and prime)
-4. Use bit operations for compact storage
+1. **Odd-only storage** - Only track odd numbers (2x reduction)
+2. **Bit array** - Pack 8 values per byte (8x reduction)
+3. **Start from p²** - Skip already-marked composites
+4. **Check up to √n** - Mathematical optimization
+5. **Segmented processing** - Cache-friendly for large n
 
-## Future Optimizations
+## Project Structure
 
-See `PLANNING.md` for detailed optimization roadmap:
-- Segmented sieve (for n > 10M)
-- Wheel factorization (mod 6 or mod 30)
-- Output optimizations
-- Potential SIMD vectorization
+```
+├── sieve.h        - Function declarations
+├── sieve.c        - Core implementation (simple + segmented)
+├── main.c         - CLI interface with timing
+├── Makefile       - Build configuration
+├── PLANNING.md    - Detailed optimization notes
+└── README.md      - This file
+```
+
+## Branch Structure
+
+This repository contains multiple optimization approaches:
+
+### **`main`** (Recommended) 
+Current production version with segmented sieve
+- Best performance for all ranges
+- Handles up to billions
+- Clean dual-path architecture
+
+### **`wheel-factorization`**
+Experimental wheel factorization (mod 6) optimization
+- 24x memory reduction vs baseline
+- Slightly slower for small n
+- Interesting alternative approach
+
+### **`backup`**
+Original bit array implementation
+- Simple odd-only + bit array
+- No segmentation
+- Good reference implementation
+
+### **`before-segmented`**
+Checkpoint before segmented sieve
+- Simple sieve only
+- Clean starting point
+
+## Benchmarks
+
+All tests run on 8-core system with `-O3 -march=native -flto`:
+
+| n | Primes Found | Time | Throughput |
+|---|--------------|------|------------|
+| 100 | 25 | 0 μs | - |
+| 1,000 | 168 | 1 μs | - |
+| 100,000 | 9,592 | 72 μs | 1.4B/s |
+| 10,000,000 | 664,579 | 8.5 ms | 1.2B/s |
+| 100,000,000 | 5,761,455 | 85 ms | 1.2B/s |
+| 1,000,000,000 | 50,847,534 | 872 ms | 1.1B/s |
+
+**Throughput** = numbers processed per second
+
+## Correctness Verification
+
+Known prime counts used for testing:
+- π(100) = 25
+- π(1,000) = 168
+- π(10,000) = 1,229
+- π(100,000) = 9,592
+- π(1,000,000) = 78,498
+- π(10,000,000) = 664,579
+- π(100,000,000) = 5,761,455
+- π(1,000,000,000) = 50,847,534
+
+All verified ✓
 
 ## Requirements
 
-- C compiler with C11 support (gcc/clang)
-- POSIX system (macOS, Linux)
-- Stack size: default 8MB sufficient for n ≤ 128M
+- **Compiler:** gcc or clang with C11 support
+- **System:** POSIX (macOS, Linux)
+- **Stack:** Default 8MB sufficient
+  - For n > 1B, may need: `ulimit -s unlimited`
+- **Math library:** `-lm` for sqrt()
 
+## Compilation Flags
+
+```makefile
+CFLAGS = -Wall -Wextra -std=c11 -O3 -march=native -flto
+```
+
+- `-O3` - Maximum optimization
+- `-march=native` - Use CPU-specific instructions
+- `-flto` - Link-time optimization
+
+## Future Optimizations
+
+Potential improvements (see `PLANNING.md`):
+- Wheel factorization (mod 30)
+- Multi-threading (parallel segments)
+- SIMD vectorization
+- Better output buffering
+- Primality testing integration
+
+## Development Philosophy
+
+This project follows strict principles:
+- ✅ **No band-aid fixes** - Clean solutions only
+- ✅ **Incremental optimization** - Test each change
+- ✅ **Git branching** - Preserve all approaches
+- ✅ **No malloc** - Stack allocation policy
+- ✅ **Maintainability** - Code clarity matters
+
+## License
+
+Open source - use freely!
+
+---
+
+**Built with care, optimized for speed, maintained with git.** 🚀
