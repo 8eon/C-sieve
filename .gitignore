@@ -9,3 +9,6 @@ primes_*
 # macOS
 .DS_Store
 
+# Separate nested projects (ignored to avoid conflicts)
+json-parser/
+
