@@ -23,7 +23,7 @@ All computation performed on the stack with no malloc.
 - **Optimized algorithm** - Sieves up to √n, starts marking from p²
 - **Aggressive compilation** - `-O3 -march=native -flto`
 
-## usage guide
+## Usage guide
 
 ### Build
 
