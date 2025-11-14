@@ -184,14 +184,6 @@ CFLAGS = -Wall -Wextra -std=c11 -O3 -march=native -flto
 - `-march=native` - Use CPU-specific instructions
 - `-flto` - Link-time optimization
 
-## Future Optimizations
-
-Potential improvements (see `PLANNING.md`):
-- Wheel factorization (mod 30)
-- Multi-threading (parallel segments)
-- SIMD vectorization
-- Better output buffering
-- Primality testing integration
 
 ## Development Philosophy
 
